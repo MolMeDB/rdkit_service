@@ -2,6 +2,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdDepictor as Depict
+from rdkit.Chem import AllChem
 
 class RDKIT:
     # Canonize SMILES
@@ -28,7 +29,30 @@ class RDKIT:
         if not mol:
             raise Exception("Wrong SMILES INPUT")
 
-        return [Chem.MolToMolBlock(mol)]
+        m3 = Chem.AddHs(mol)
+        AllChem.EmbedMolecule(m3)
+
+        structure = Chem.MolToMolBlock(m3)
+
+        return [structure]
+
+    # Makes 2D structure
+    def make2Dstructure(self, params = {}):
+        if not "smi" in params:
+            print("Parameter 'smi' not found in argument list. Please, fill some SMILES.")
+            return []
+        
+        req_smiles = params["smi"]
+        mol = Chem.MolFromSmiles(req_smiles)
+
+        Depict.Compute2DCoords(mol)
+
+        if not mol:
+            raise Exception("Wrong SMILES INPUT")
+
+        structure = Chem.MolToMolBlock(mol)
+
+        return [structure]
 
     # Generate InChIKey
     def makeInchi(self, params = {}):

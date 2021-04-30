@@ -23,7 +23,7 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
         valid_paths = [
             "smiles/canonize",
             "3dstructure/generate",
-            # "2dstructure/generate",
+            "2dstructure/generate",
             "makeInchi",
             "general"
         ]
@@ -82,8 +82,8 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             elif uri == "3dstructure/generate":
                 output = self.RDKIT.make3Dstructure(request_params)
 
-            # elif uri == "2dstructure/generate":
-            #     output = self.RDKIT.get2DStructure(request_params)
+            elif uri == "2dstructure/generate":
+                output = self.RDKIT.make2Dstructure(request_params)
 
             # Makes inchi from smiles
             elif uri == "makeInchi":
