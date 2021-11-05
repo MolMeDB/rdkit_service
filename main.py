@@ -25,7 +25,8 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             "3dstructure/generate",
             "2dstructure/generate",
             "makeInchi",
-            "general"
+            "general",
+            "mmpa/fragment",
         ]
 
         return path in valid_paths
@@ -92,6 +93,10 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             # Get general info about molecule
             elif uri == "general":
                 output = self.RDKIT.getGeneralInfo(request_params)
+
+            # MMPA - Get molecule substructures
+            elif uri == "mmpa/fragment":
+                output = self.RDKIT.mmpaFragment(request_params)
 
         except Exception as e:
             self.answer(e, 404)

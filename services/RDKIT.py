@@ -3,8 +3,44 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem import Crippen
 from rdkit.Chem import rdDepictor as Depict
 from rdkit.Chem import AllChem
+import services.mmpa.rfrag as rfrag
 
 class RDKIT:
+    # Fragment molecule
+    def mmpaFragment(self, params = {}):
+        if "mol" not in params.keys():
+            return None
+
+        smiles = params["mol"]
+        id = params["id"] if "id" in params.keys() else 1
+
+        # First, canonize smiles
+        canonized_smiles = Chem.MolToSmiles(Chem.MolFromSmiles(smiles))
+
+        if not canonized_smiles:
+            return None
+
+        fragments = rfrag.fragment_mol(canonized_smiles, id)
+
+        result = []
+
+        for i in fragments:
+            t = i.split(",")
+            if(len(t) < 4):
+                continue
+            f = t[3].split(".")
+            f_res = []
+            for ft in f:
+                f_res.append(ft)
+            result.append({
+                "input": t[0],
+                "identifier": t[1],
+                "core": t[2],
+                "fragments": f_res,
+            })
+        return result
+
+
     # Canonize SMILES
     def canonizeSmiles(self, params = {}):
         if not "smi" in params:
