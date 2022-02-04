@@ -1,6 +1,7 @@
+from os import access
 import requests
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
+import json, socket
 import base64
 import logging
 import datetime
@@ -27,6 +28,7 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             "makeInchi",
             "general",
             "mmpa/fragment",
+            "mol/similarity"
         ]
 
         return path in valid_paths
@@ -76,6 +78,9 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
 
         print("Initialized... Requested path: " + uri)
 
+        ans = True
+        asHTML = False
+
         try:
             if uri == "smiles/canonize":
                 output = self.RDKIT.canonizeSmiles(request_params)
@@ -96,30 +101,45 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
 
             # MMPA - Get molecule substructures
             elif uri == "mmpa/fragment":
-                output = self.RDKIT.mmpaFragment(request_params)
+                ans, output, asHTML = self.RDKIT.mmpaFragment(request_params, self)
+
+            # MMPA - Get molecule substructures
+            elif uri == "mol/similarity":
+                ans, output = self.RDKIT.computeSimilarity(request_params)
 
         except Exception as e:
             self.answer(e, 404)
             return
 
         # Send answer
-        self.answer(output, status)
+        if ans:
+            self.answer(output, status, asHTML)
 
 
     # Server answer
-    def answer(self, response, code):
+    def answer(self, response, code, asHTML = False):
         if isinstance(response, Exception):
             response = response.args[0]
 
-        if not isinstance(response, list) and not isinstance(response, dict):
-            response = [response]
+        if not asHTML:
+            if not isinstance(response, list) and not isinstance(response, dict):
+                response = [response]
 
-        output_data = json.dumps(response).encode()
+            output_data = json.dumps(response).encode()
 
-        self.send_response(code)
+            self.send_response(code)
 
-        self.send_header("Content-Length", output_data.__len__())
-        self.send_header('Content-type','application/json')
+            self.send_header("Content-Length", output_data.__len__())
+            self.send_header('Content-type','application/json')
+        else: 
+            response = str(response).encode()
+
+            output_data = response
+            self.send_response(code)
+
+            self.send_header("Content-Length", output_data.__len__())
+            self.send_header('Content-type','text/html')
+
         self.end_headers()
 
         # Send data
