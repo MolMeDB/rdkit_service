@@ -53,6 +53,21 @@ class RDKIT:
 
         return True, result, print_result
 
+    # Returns mol fingerprints
+    def getFingerprint(self, params = {}):
+        if "mol" not in params:
+            return False
+
+        s = params["mol"]
+
+        mol = Chem.MolFromSmiles(s)
+        fp = Chem.RDKFingerprint(mol)
+
+        return {
+            "smiles": s,
+            "fingeprint": fp.ToBitString()
+        }
+
     def similarity(self, smiles1, smiles2):
         if not smiles1 or not smiles2:
             return None

@@ -28,7 +28,8 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             "makeInchi",
             "general",
             "mmpa/fragment",
-            "mol/similarity"
+            "mol/similarity",
+            "mol/fingerprint"
         ]
 
         return path in valid_paths
@@ -103,9 +104,13 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             elif uri == "mmpa/fragment":
                 ans, output, asHTML = self.RDKIT.mmpaFragment(request_params, self)
 
-            # MMPA - Get molecule substructures
+            # MMPA - Get molecules similarity
             elif uri == "mol/similarity":
                 ans, output = self.RDKIT.computeSimilarity(request_params)
+
+            # MMPA - Get molecule fingerprint
+            elif uri == "mol/fingerprint":
+                output = self.RDKIT.getFingerprint(request_params)
 
         except Exception as e:
             self.answer(e, 404)
