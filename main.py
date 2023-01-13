@@ -23,6 +23,8 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
     def is_valid_path(self, path):
         valid_paths = [
             "smiles/canonize",
+            "smiles/allCharges",
+            "cosmo/conformers",
             "3dstructure/generate",
             "2dstructure/generate",
             "makeInchi",
@@ -85,6 +87,12 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
         try:
             if uri == "smiles/canonize":
                 output = self.RDKIT.canonizeSmiles(request_params)
+
+            elif uri == "smiles/allCharges":
+                output = self.RDKIT.getAllChargeSmiles(request_params)
+
+            elif uri == "cosmo/conformers":
+                output = self.RDKIT.COSMO_conformers(request_params)
 
             elif uri == "3dstructure/generate":
                 output = self.RDKIT.make3Dstructure(request_params)

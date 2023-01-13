@@ -6,6 +6,7 @@ from rdkit.Chem import AllChem
 import services.mmpa.rfrag as rfrag
 import json
 import re
+import services.gen_confomers as cnf
 
 class RDKIT:
     # Fragment molecule
@@ -188,4 +189,80 @@ class RDKIT:
             "LogP": LogP
         }
 
-    # Fingerprint similarity
+    # Returns all charge states for given molecule smiles
+    def getAllChargeSmiles(self, params = {}):
+        if params is None or "smi" not in params or params["smi"] is None:
+            print("Missing SMI parameter")
+            return []
+        
+        if "limit" not in params:
+            limit = 20
+        else:
+            limit = int(params["limit"])
+
+        smiles = params["smi"]
+        # Check smiles validity
+        mol = Chem.MolFromSmiles(smiles)
+
+        if mol is None:
+            print("Invalid SMILES:", smiles)
+            return []
+
+        # Add library
+        from dimorphite_dl import DimorphiteDL
+
+        phLimits = [
+            (0,14),
+            (1,13),
+            (2,11),
+            (3,10),
+            (4,9),
+            (5,8),
+            (6,8),
+            (6.8,7.5),
+            (7,7.5)
+        ]
+
+        for start, end in phLimits:
+            dimorphite_dl = DimorphiteDL(
+                min_ph=start, # Whole pH range
+                max_ph=end,
+                max_variants=128,
+                label_states=False,
+                pka_precision=1.0
+            )
+
+            # Get all protonated/deprotonated states
+            prot_smiles_list = dimorphite_dl.protonate(smiles)
+
+            if len(prot_smiles_list) < limit:
+                break
+
+        return {"pH_start": start, "pH_end": end, "molecules": prot_smiles_list}
+
+        
+    # Returns COSMO conformers
+    def COSMO_conformers(self, params = {}):
+        if params is None or "smi" not in params or params["smi"] is None:
+            print("Missing `smi` parameter.")
+            return []
+
+        if "name" not in params or not params["name"]:
+            print("Invalid structure name.")
+            return []
+
+        smiles = params["smi"]
+        name = params["name"]
+        # Check smiles validity
+        mol = Chem.MolFromSmiles(smiles)
+
+        if mol is None:
+            print("Invalid SMILES:", smiles)
+            return []
+
+        instance = cnf.Conformers()
+        return instance.run(mol, name)
+
+        
+
+        

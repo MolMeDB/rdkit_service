@@ -1,10 +1,10 @@
-FROM mcs07/rdkit:latest
+FROM continuumio/miniconda3
 
 WORKDIR /usr/src/app
 
-RUN apt-get update  && apt-get install -yq --no-install-recommends python3-pip
-
 RUN pip3 install --no-cache-dir requests
+RUN pip3 install rdkit-pypi
+RUN pip3 install --no-cache-dir dimorphite-dl
 
 COPY . .
 
