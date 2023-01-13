@@ -66,7 +66,7 @@ class RDKIT:
 
         return {
             "smiles": s,
-            "fingeprint": fp.ToBitString()
+            "fingerprint": fp.ToBitString()
         }
 
     def similarity(self, smiles1, smiles2):
