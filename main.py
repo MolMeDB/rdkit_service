@@ -1,13 +1,9 @@
 from os import access
-import requests
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json, socket
-import base64
-import logging
-import datetime
+import json, base64, shutil
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse, unquote
-from services import RDKIT as R
+from services import RDKIT as R, ssh
 
 
 class SERVICE(ThreadingHTTPServer):
@@ -24,14 +20,21 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
         valid_paths = [
             "smiles/canonize",
             "smiles/allCharges",
-            "cosmo/conformers",
+            "conformers/toCosmo",
             "3dstructure/generate",
             "2dstructure/generate",
             "makeInchi",
             "general",
             "mmpa/fragment",
             "mol/similarity",
-            "mol/fingerprint"
+            "mol/fingerprint",
+            "cosmo/runningJobs",
+            "cosmo/getResults",
+            "cosmo/clearFolderStructure",
+            "cosmo/uploadSDF",
+            "cosmo/checkOptimizationStatus",
+            "cosmo/optimizeSDF",
+            "cosmo/run"
         ]
 
         return path in valid_paths
@@ -43,7 +46,12 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
     # Proccess GET request
     def do_GET(self):
         self.init()
-
+        
+        auth = self.headers.get('Authorization')
+        if auth and str(auth).strip().startswith("Basic"):
+            auth = str(auth).replace("Basic", "").strip()
+            auth = base64.b64decode(auth).decode('utf-8')
+            
         # Each output should be array
         output = [] 
 
@@ -83,6 +91,32 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
 
         ans = True
         asHTML = False
+        asFile = False
+        
+        if uri.startswith("cosmo"):
+            if "server" in request_params:
+                server = request_params["server"]
+            else:
+                server = "zuphux.metacentrum.cz"
+                
+            # Get username and password from HTTP header
+            auth = str(auth).split(":")
+            if not len(auth) == 2:
+                self.answer("Invalid credentials", 401)
+                return
+            
+            try:
+                if not ssh.connect(
+                    server, 
+                    auth[0], 
+                    auth[1], 
+                    ignoreSFTP=request_params["ignoreSFTP"] if "ignoreSFTP" in request_params else False
+                ):
+                    self.answer("Invalid credentials", 401)
+                    return
+            except Exception as e:
+                print(e)
+                self.answer("Invalid credentials", 401)
 
         try:
             if uri == "smiles/canonize":
@@ -91,7 +125,7 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             elif uri == "smiles/allCharges":
                 output = self.RDKIT.getAllChargeSmiles(request_params)
 
-            elif uri == "cosmo/conformers":
+            elif uri == "conformers/toCosmo":
                 output = self.RDKIT.COSMO_conformers(request_params)
 
             elif uri == "3dstructure/generate":
@@ -120,21 +154,69 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
             elif uri == "mol/fingerprint":
                 output = self.RDKIT.getFingerprint(request_params)
 
+            # COSMO - Download results
+            elif uri == "cosmo/runningJobs":
+                output = ssh.getRunningJobs(request_params)
+                
+            # COSMO - Download results
+            elif uri == "cosmo/getResults":
+                output = ssh.cosmo_download_results(request_params)
+                asFile = isinstance(output, str)
+
+            # COSMO - Clear folder structure => for FORCE re-computation
+            elif uri == "cosmo/clearFolderStructure":
+                output = ssh.cosmo_clear_folder_structure(request_params)
+                
+            # COSMO - Upload SDF files to remote server
+            elif uri == "cosmo/uploadSDF":
+                output = ssh.cosmo_upload_sdf(request_params)
+                
+            # COSMO - Check state of optimization
+            elif uri == "cosmo/checkOptimizationStatus":
+                output = ssh.cosmo_check_optimization_status(request_params)
+                
+            # COSMO - Check state of optimization
+            elif uri == "cosmo/optimizeSDF":
+                output = ssh.cosmo_optimize_sdf(request_params)
+    
+            # COSMO - Run COSMO
+            elif uri == "cosmo/run":
+                output = ssh.runCosmo(request_params)
+    
         except Exception as e:
+            print(e)
             self.answer(e, 404)
             return
 
         # Send answer
         if ans:
-            self.answer(output, status, asHTML)
+            self.answer(output, status, asHTML, asFile=asFile)
 
 
     # Server answer
-    def answer(self, response, code, asHTML = False):
+    def answer(self, response, code, asHTML = False, asFile = False):
         if isinstance(response, Exception):
             response = response.args[0]
+            
+        if asFile:
+            import os
+            if not os.path.exists(response):
+                self.send_response(404, "File not found")
+                return
+            self.send_response(code)
 
-        if not asHTML:
+            self.send_header("Content-Length", os.path.getsize(response))
+            self.send_header('Content-Disposition','attachment; filename="archive.zip')
+            self.send_header('Content-type','application/zip')
+            output_data = open(response, 'rb').read()
+            
+            # Finally, remove the output data
+            # Remove whole created folder structure
+            root = response.split('/')[0]
+            if os.path.isdir(root):
+                shutil.rmtree(root)
+
+        elif not asHTML:
             if not isinstance(response, list) and not isinstance(response, dict):
                 response = [response]
 
@@ -157,9 +239,6 @@ class SERVICE_HANDLER(BaseHTTPRequestHandler):
 
         # Send data
         self.wfile.write(output_data)
-
-
-
 
 
 # Where to listen
