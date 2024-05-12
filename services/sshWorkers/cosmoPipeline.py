@@ -29,8 +29,8 @@ STEP_COSMO_DOWNLOAD = 11
 
 sshClient = None
 
-MOLMEDB_SERVER = "http://192.168.0.183:1515/"
-# MOLMEDB_SERVER = "https://molmedb.upol.cz/"
+# MOLMEDB_SERVER = "http://192.168.0.183:1515/"
+MOLMEDB_SERVER = "https://molmedb.upol.cz/"
 
 ansi_escape = re.compile(r'''
     \x1B  # ESC
@@ -534,7 +534,7 @@ rmic=micelle.mic"""
 
 class SDFFile:
     # Constants
-    SERVER_FOLDER_PREFIX = "~/.MolMeDB_test/COSMO/"
+    SERVER_FOLDER_PREFIX = "~/.MolMeDB/COSMO/"
     LAST_FOLDER = "conformers"
     FILE_FOLDERS = [
         "01-INPUT",
