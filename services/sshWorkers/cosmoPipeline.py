@@ -296,9 +296,9 @@ def run_cosmo(idFragment, idIon, sshClient, membraneId=None, temp=25, queue="eli
     
 
 class COSMO:
-    QUEUE_ELIXIR = "elixircz@elixir-pbs.elixir-czech.cz"
-    QUEUE_METACENTRUM = "default@meta-pbs.metacentrum.cz"
-    QUEUE_CERIT = "@cerit-pbs.cerit-sc.cz"
+    QUEUE_ELIXIR = "elixircz@pbs-m1.metacentrum.cz"
+    QUEUE_METACENTRUM = "default@pbs-m1.metacentrum.cz	"
+    QUEUE_CERIT = "default@pbs-m1.metacentrum.cz	"
     
     def __init__(self, sshClient, forceRun, type, temperature, membrane, membraneName, queue = "elixir", files = []): 
         self.files = files

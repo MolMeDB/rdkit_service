@@ -1,8 +1,8 @@
 import re
 
-QUEUE_ELIXIR = "elixircz@elixir-pbs.elixir-czech.cz"
-QUEUE_METACENTRUM = "default@meta-pbs.metacentrum.cz"
-QUEUE_CERIT = "@cerit-pbs.cerit-sc.cz"
+QUEUE_ELIXIR = "elixircz@pbs-m1.metacentrum.cz"
+QUEUE_METACENTRUM = "default@pbs-m1.metacentrum.cz"
+QUEUE_CERIT = "default@pbs-m1.metacentrum.cz"
 SCRIPTPATH_PS = "[SCRIPT_PATH]"
 SDFPATH_PS = "[SDFPATH_PS]"
 LOGPATH_PS = "[LOGPATH_PS]"
