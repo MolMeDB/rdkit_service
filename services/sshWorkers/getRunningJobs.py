@@ -5,7 +5,7 @@ def run(sshClient, username, include_finished = False):
         jobs = sshClient.shell_exec("qstat -xwfu " + username, clear=False, sleepTime=5)
     else:
         jobs = sshClient.shell_exec("qstat -pwfu " + username, clear=False, sleepTime=5)
-
+        
     jobs = parseRunningJobs([str(row).split() for row in jobs])
 
     return {"status": "ok", "total": len(jobs), "jobs": jobs}

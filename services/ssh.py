@@ -81,6 +81,8 @@ class SSHClient:
             username=self.username, 
             password=self.password
         )
+        # Wait until welcome messages are printed
+        time.sleep(2)
         # init shell
         self.shell = self.ssh.invoke_shell()
         self.shell_exec("clear")
@@ -131,7 +133,7 @@ class SSHClient:
         time.sleep(sleepTime)
         while self.shell.recv_ready():
             out += str(self.shell.recv(2048))
-
+            
         out = out.replace("\\r", "")
         out = out.replace("\\t", "")
         out = out.replace("\\x1b", "\x1b")
